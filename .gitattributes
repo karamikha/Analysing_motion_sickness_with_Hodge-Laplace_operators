@@ -1,0 +1,2 @@
+EEG_data/EEG_data_after_treatment.txt filter=lfs diff=lfs merge=lfs -text
+EEG_data/EEG_data_before_treatment.txt filter=lfs diff=lfs merge=lfs -text

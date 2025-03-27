@@ -11,7 +11,6 @@ def VisualizeMNE(data, channels_names):
     raw = mne.io.RawArray(data, info)
 
     raw.plot(scalings=dict(eeg=150000), n_channels=channels_q, butterfly=False)
-    raw.compute_psd().plot()
     plt.show()
 
 
@@ -23,38 +22,38 @@ def VisualizeMatplotlib(data, channels_names, times):
     for i in range(channels_q):
         axes[i].plot(times, data[:, i], color=colours[i])
         axes[i].set_ylabel(channels_names[i])
-    axes[channels_q - 1].set_xlabel("time (с)")
-    plt.suptitle("EEG signals")
+    axes[channels_q - 1].set_xlabel("Время (с)")
+    plt.suptitle("ЭЭГ-сигналы")
     plt.tight_layout()
     plt.show()
 
 
-def VisualizeGraph(corr_matrix, channels_names):
-    EEG_graph_before_treatment = nx.Graph()
+def VisualizeGraph(corr_matrix, channels_names, label):
+    EEG_graph = nx.Graph()
     for i in range(len(channels_names)):
-        EEG_graph_before_treatment.add_node(i)
+        EEG_graph.add_node(i)
     for i in range(len(channels_names)):
         for j in range(i + 1, len(channels_names)):
             if corr_matrix[i, j] != 0:
-                EEG_graph_before_treatment.add_edge(i, j, weight=corr_matrix[i, j],
+                EEG_graph.add_edge(i, j, weight=corr_matrix[i, j],
                                                     node_names=(channels_names[i], channels_names[j]))
 
     # drawing graph
     plt.figure(1)
-    pos = nx.spring_layout(EEG_graph_before_treatment)
-    edges = EEG_graph_before_treatment.edges(data=True)
-    nx.draw_networkx_nodes(EEG_graph_before_treatment, pos, node_size=500, node_color='green', edgecolors='black')
-    nx.draw_networkx_edges(EEG_graph_before_treatment, pos, edges, edge_color='gray')
-    nx.draw_networkx_labels(EEG_graph_before_treatment, pos, {i: channels_names[i] for i in range(len(channels_names))},
+    pos = nx.spring_layout(EEG_graph, k=1.7)
+    edges = EEG_graph.edges(data=True)
+    nx.draw_networkx_nodes(EEG_graph, pos, node_size=500, node_color='green', edgecolors='black')
+    nx.draw_networkx_edges(EEG_graph, pos, edges, edge_color='gray')
+    nx.draw_networkx_labels(EEG_graph, pos, {i: channels_names[i] for i in range(len(channels_names))},
                             font_size=12, font_color='black')
-    nx.draw_networkx_edge_labels(EEG_graph_before_treatment, pos, {(u, v): f"{d['weight']:.2f}" for u, v, d in edges},
+    nx.draw_networkx_edge_labels(EEG_graph, pos, {(u, v): f"{d['weight']:.2f}" for u, v, d in edges},
                                  font_color='red')
-    plt.title("EEG Graph visualization")
+    plt.title(label)
     plt.show()
 
 
-def VisualizeFuncConnectome(corr_matrix, channels_names):
+def VisualizeFuncConnectome(corr_matrix, channels_names, label):
     plt.figure(2, (5, 4))
     sns.heatmap(corr_matrix, cmap="winter", xticklabels=channels_names, yticklabels=channels_names)
-    plt.title("EEG Functional Connectivity (before treatment)")
+    plt.title(label)
     plt.show()
