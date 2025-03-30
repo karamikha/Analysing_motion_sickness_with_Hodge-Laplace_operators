@@ -63,23 +63,24 @@ for el in ["BCV", "tACS"]:
     print()
 
     fig, axs = plt.subplots(figsize=(8, 6), ncols=1, nrows=2)
-    axs[0].plot(numbers_of_participants_for_active_treatment, q_connected_comps_before_active_treatment_list,
-                marker="o", color="blue",
-                label="Активное лечение")
-    axs[0].plot(numbers_of_participants_for_active_treatment, q_connected_comps_after_active_treatment_list, marker="o",
-                color="red",
-                label="Фиктивное лечение")
+    axs[0].scatter(numbers_of_participants_for_active_treatment, q_connected_comps_before_active_treatment_list,
+                   marker="o", color="blue",
+                   label="Активное лечение", alpha=0.5)
+    axs[0].scatter(numbers_of_participants_for_active_treatment, q_connected_comps_after_active_treatment_list,
+                   marker="o",
+                   color="red",
+                   label="Фиктивное лечение", alpha=0.5)
     axs[0].set_title(f"Число компонент до/после активного лечения для {el}")
     axs[0].set_xlabel("Номер испытуемого")
     axs[0].set_ylabel("Число компонент связности")
     axs[0].legend()
 
-    axs[1].plot(numbers_of_participants_for_sham_treatment, q_connected_comps_before_sham_treatment_list, marker="o",
-                color="blue",
-                label="Активное лечение")
-    axs[1].plot(numbers_of_participants_for_sham_treatment, q_connected_comps_after_sham_treatment_list, marker="o",
-                color="red",
-                label="Фиктивное лечение")
+    axs[1].scatter(numbers_of_participants_for_sham_treatment, q_connected_comps_before_sham_treatment_list, marker="o",
+                   color="blue",
+                   label="Активное лечение", alpha=0.5)
+    axs[1].scatter(numbers_of_participants_for_sham_treatment, q_connected_comps_after_sham_treatment_list, marker="o",
+                   color="red",
+                   label="Фиктивное лечение", alpha=0.5)
     axs[1].set_title(f"Число компонент до/после фиктивного лечения для {el}")
     axs[1].set_xlabel("Номер испытуемого")
     axs[1].set_ylabel("Число компонент связности")

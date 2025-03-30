@@ -1,11 +1,9 @@
-"""
-H0: the treatment hasn't reduced the number of components
-"""
 from scipy import stats as sts
 from pathlib import Path
 from hodge_laplacians_functions import *
 from sklearn.cluster import KMeans
 from sklearn.metrics import confusion_matrix
+
 
 def FindVectorsOfEigenvalues(method, way):
     vectors_of_eigenvalues_before_treatment_list = []
@@ -36,7 +34,9 @@ def FindVectorsOfEigenvalues(method, way):
 
     return vectors_of_eigenvalues_before_treatment_list, vectors_of_eigenvalues_after_treatment_list
 
-def FindRealAndPredictedGroups(vectors_of_eigenvalues_before_treatment_list, vectors_of_eigenvalues_after_treatment_list):
+
+def FindRealAndPredictedGroups(vectors_of_eigenvalues_before_treatment_list,
+                               vectors_of_eigenvalues_after_treatment_list):
     vectors_of_eigenvalues_before_treatment_list = np.array(vectors_of_eigenvalues_before_treatment_list)
     vectors_of_eigenvalues_after_treatment_list = np.array(vectors_of_eigenvalues_after_treatment_list)
     vectors_of_eigenvalues_treatment_list = np.vstack(
@@ -50,6 +50,7 @@ def FindRealAndPredictedGroups(vectors_of_eigenvalues_before_treatment_list, vec
 
     return real_groups, predicted_groups
 
+
 def FindErrorsRates(real_groups, predicted_groups):
     conf_matrix = confusion_matrix(real_groups, predicted_groups)
     TN, FP, FN, TP = conf_matrix.ravel()
@@ -57,6 +58,7 @@ def FindErrorsRates(real_groups, predicted_groups):
     error_2_rate = FN / (FN + TP)
 
     return error_1_rate, error_2_rate
+
 
 def InvestigateHypoForClasters(real_groups, predicted_groups):
     conf_matrix = confusion_matrix(real_groups, predicted_groups)
@@ -71,12 +73,14 @@ def InvestigateHypoForClasters(real_groups, predicted_groups):
 for el in ["BCV", "tACS"]:
     print(f"{el}:")
 
-    vectors_of_eigenvalues_before_active_treatment_list, vectors_of_eigenvalues_after_active_treatment_list = FindVectorsOfEigenvalues(el, "Active")
-    vectors_of_eigenvalues_before_sham_treatment_list, vectors_of_eigenvalues_after_sham_treatment_list = FindVectorsOfEigenvalues(el, "Sham")
-
+    vectors_of_eigenvalues_before_active_treatment_list, vectors_of_eigenvalues_after_active_treatment_list = FindVectorsOfEigenvalues(
+        el, "Active")
+    vectors_of_eigenvalues_before_sham_treatment_list, vectors_of_eigenvalues_after_sham_treatment_list = FindVectorsOfEigenvalues(
+        el, "Sham")
 
     print("Active:")
-    real_groups, predicted_groups = FindRealAndPredictedGroups(vectors_of_eigenvalues_before_active_treatment_list, vectors_of_eigenvalues_after_active_treatment_list)
+    real_groups, predicted_groups = FindRealAndPredictedGroups(vectors_of_eigenvalues_before_active_treatment_list,
+                                                               vectors_of_eigenvalues_after_active_treatment_list)
 
     accuracy = np.mean(predicted_groups == real_groups)
     print(f"Clusterization accuracy: {accuracy}")
@@ -85,7 +89,6 @@ for el in ["BCV", "tACS"]:
     print(f"Type 1 error rate: {error_1_rate}, type 2 error rate: {error_2_rate}")
 
     InvestigateHypoForClasters(real_groups, predicted_groups)
-
 
     print()
     print("Sham:")

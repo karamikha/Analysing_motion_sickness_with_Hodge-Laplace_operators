@@ -46,13 +46,13 @@ def FindBoundaryMatrix(cliques_k, cliques_km1):
 
 def ComputeKHodgeLaplacian(functional_connectome, k, is_weighted):
     if k == 0:
-        return ComputeGraphLaplacian(functional_connectome)
+        return ComputeGraphLaplacian(functional_connectome, is_weighted)
 
     cliques_k = FindCliques(functional_connectome, k + 1)
     cliques_kp1 = FindCliques(functional_connectome, k + 2)
     cliques_km1 = FindCliques(functional_connectome, k)
 
-    if len(cliques_km1) == 0:
+    if len(cliques_km1) == 0 or len(cliques_k) == 0:
         return np.array([])
 
     boundary_matrix_k = FindBoundaryMatrix(cliques_k, cliques_km1)
@@ -81,7 +81,10 @@ def ComputeKHodgeLaplacian(functional_connectome, k, is_weighted):
     return hodge_laplacian_matrix
 
 
-def ComputeGraphLaplacian(functional_connectome):
+def ComputeGraphLaplacian(functional_connectome, is_weighted):
+    if not is_weighted:
+        functional_connectome = np.where(functional_connectome > 0, 1, 0)
+
     D = np.zeros(functional_connectome.shape)
     for i in range(functional_connectome.shape[0]):
         D[i, i] = np.sum(functional_connectome[i, :])
