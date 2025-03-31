@@ -4,7 +4,7 @@ from hodge_laplacians_functions import *
 import matplotlib.pyplot as plt
 
 
-def FindQConnectedComponents(method, way):
+def FindQConnectedComponents(method, way, threshold):
     q_connected_comps_before_treatment_list = []
     q_connected_comps_after_treatment_list = []
     numbers_of_participants_for_treatment = []
@@ -22,7 +22,7 @@ def FindQConnectedComponents(method, way):
                     EEG_data = np.loadtxt(f"../EEG_data/{method}/{way}/{i + 1}/" + file.name)
                     EEG_data = EEG_data[:, :8].transpose()
                     corr_matrix = np.abs(np.corrcoef(EEG_data))
-                    corr_matrix = np.where(corr_matrix > 0.7, corr_matrix, 0)
+                    corr_matrix = np.where(corr_matrix > threshold, corr_matrix, 0)
 
                     graph_laplacian = ComputeKHodgeLaplacian(corr_matrix, 0, True)
 
@@ -48,43 +48,47 @@ def InvestigateHypoForQConnComps(q_connected_comps_before_treatment_list, q_conn
             f"The {way} treatment hasn't reduced the number of components (type 2 error is possible), p-value = {p_value}")
 
 
-for el in ["BCV", "tACS"]:
-    print(f"{el}:")
+for threshold in [0.7, 0.5, 0.3]:
+    print(f"Threshold {threshold}:")
+    for el in ["BCV", "tACS"]:
+        print(f"{el}:")
 
-    q_connected_comps_before_active_treatment_list, q_connected_comps_after_active_treatment_list, numbers_of_participants_for_active_treatment = FindQConnectedComponents(
-        el, "Active")
-    InvestigateHypoForQConnComps(q_connected_comps_before_active_treatment_list,
-                                 q_connected_comps_after_active_treatment_list, "Active")
+        q_connected_comps_before_active_treatment_list, q_connected_comps_after_active_treatment_list, numbers_of_participants_for_active_treatment = FindQConnectedComponents(
+            el, "Active", threshold)
+        InvestigateHypoForQConnComps(q_connected_comps_before_active_treatment_list,
+                                     q_connected_comps_after_active_treatment_list, "Active")
 
-    q_connected_comps_before_sham_treatment_list, q_connected_comps_after_sham_treatment_list, numbers_of_participants_for_sham_treatment = FindQConnectedComponents(
-        el, "Sham")
-    InvestigateHypoForQConnComps(q_connected_comps_before_sham_treatment_list,
-                                 q_connected_comps_after_sham_treatment_list, "Sham")
-    print()
+        q_connected_comps_before_sham_treatment_list, q_connected_comps_after_sham_treatment_list, numbers_of_participants_for_sham_treatment = FindQConnectedComponents(
+            el, "Sham", threshold)
+        InvestigateHypoForQConnComps(q_connected_comps_before_sham_treatment_list,
+                                     q_connected_comps_after_sham_treatment_list, "Sham")
+        print()
 
-    fig, axs = plt.subplots(figsize=(8, 6), ncols=1, nrows=2)
-    axs[0].scatter(numbers_of_participants_for_active_treatment, q_connected_comps_before_active_treatment_list,
-                   marker="o", color="blue",
-                   label="Активное лечение", alpha=0.5)
-    axs[0].scatter(numbers_of_participants_for_active_treatment, q_connected_comps_after_active_treatment_list,
-                   marker="o",
-                   color="red",
-                   label="Фиктивное лечение", alpha=0.5)
-    axs[0].set_title(f"Число компонент до/после активного лечения для {el}")
-    axs[0].set_xlabel("Номер испытуемого")
-    axs[0].set_ylabel("Число компонент связности")
-    axs[0].legend()
+        fig, axs = plt.subplots(figsize=(8, 6), ncols=1, nrows=2)
+        axs[0].scatter(numbers_of_participants_for_active_treatment, q_connected_comps_before_active_treatment_list,
+                       marker="o", color="blue",
+                       label="До лечения", alpha=0.5)
+        axs[0].scatter(numbers_of_participants_for_active_treatment, q_connected_comps_after_active_treatment_list,
+                       marker="o",
+                       color="red",
+                       label="После лечения", alpha=0.5)
+        axs[0].set_title(f"Число компонент до/после активного лечения для {el}")
+        axs[0].set_xlabel("Номер испытуемого")
+        axs[0].set_ylabel("Число компонент связности")
+        axs[0].legend()
 
-    axs[1].scatter(numbers_of_participants_for_sham_treatment, q_connected_comps_before_sham_treatment_list, marker="o",
-                   color="blue",
-                   label="Активное лечение", alpha=0.5)
-    axs[1].scatter(numbers_of_participants_for_sham_treatment, q_connected_comps_after_sham_treatment_list, marker="o",
-                   color="red",
-                   label="Фиктивное лечение", alpha=0.5)
-    axs[1].set_title(f"Число компонент до/после фиктивного лечения для {el}")
-    axs[1].set_xlabel("Номер испытуемого")
-    axs[1].set_ylabel("Число компонент связности")
-    axs[1].legend()
+        axs[1].scatter(numbers_of_participants_for_sham_treatment, q_connected_comps_before_sham_treatment_list, marker="o",
+                       color="blue",
+                       label="До лечения", alpha=0.5)
+        axs[1].scatter(numbers_of_participants_for_sham_treatment, q_connected_comps_after_sham_treatment_list, marker="o",
+                       color="red",
+                       label="После лечения", alpha=0.5)
+        axs[1].set_title(f"Число компонент до/после фиктивного лечения для {el}")
+        axs[1].set_xlabel("Номер испытуемого")
+        axs[1].set_ylabel("Число компонент связности")
+        axs[1].legend()
 
-    plt.tight_layout()
-    plt.show()
+        plt.tight_layout()
+        plt.show()
+
+    print("\n\n")

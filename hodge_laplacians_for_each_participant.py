@@ -26,7 +26,7 @@ for method in ["BCV", "tACS"]:
                         EEG_data = np.loadtxt(f"EEG_data/{method}/{way}/{i + 1}/" + file.name)
                         EEG_data = EEG_data[:, :8].transpose()
                         corr_matrix = np.abs(np.corrcoef(EEG_data))
-                        corr_matrix = np.where(corr_matrix > 0.7, corr_matrix, 0)
+                        corr_matrix = np.where(corr_matrix > 0.3, corr_matrix, 0)
                         # VisualizeGraph(corr_matrix, ["Fz", "Pz", "P3", "P4", "Cz", "EXT", "CP5", "CP6"], "")
 
                         k = 0

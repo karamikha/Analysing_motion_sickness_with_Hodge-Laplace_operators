@@ -1,11 +1,11 @@
 from scipy import stats as sts
 from pathlib import Path
 from hodge_laplacians_functions import *
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics import confusion_matrix
 
 
-def FindVectorsOfEigenvalues(method, way):
+def FindVectorsOfEigenvalues(method, way, threshold):
     vectors_of_eigenvalues_before_treatment_list = []
     vectors_of_eigenvalues_after_treatment_list = []
     for i in range(21):
@@ -21,7 +21,7 @@ def FindVectorsOfEigenvalues(method, way):
                     EEG_data = np.loadtxt(f"../EEG_data/{method}/{way}/{i + 1}/" + file.name)
                     EEG_data = EEG_data[:, :8].transpose()
                     corr_matrix = np.abs(np.corrcoef(EEG_data))
-                    corr_matrix = np.where(corr_matrix > 0.7, corr_matrix, 0)
+                    corr_matrix = np.where(corr_matrix > threshold, corr_matrix, 0)
 
                     graph_laplacian = ComputeKHodgeLaplacian(corr_matrix, 0, True)
 
@@ -45,8 +45,8 @@ def FindRealAndPredictedGroups(vectors_of_eigenvalues_before_treatment_list,
     real_groups = np.array(
         [0] * len(vectors_of_eigenvalues_before_treatment_list) + [1] * len(
             vectors_of_eigenvalues_after_treatment_list))
-    kmeans = KMeans(n_clusters=2, random_state=13)
-    predicted_groups = kmeans.fit_predict(vectors_of_eigenvalues_treatment_list)
+    spec_clust = SpectralClustering(n_clusters=2, random_state=13)
+    predicted_groups = spec_clust.fit_predict(vectors_of_eigenvalues_treatment_list)
 
     return real_groups, predicted_groups
 
@@ -70,37 +70,41 @@ def InvestigateHypoForClasters(real_groups, predicted_groups):
         print(f"Clustering and real groups are independent, p-value = {p_value}")
 
 
-for el in ["BCV", "tACS"]:
-    print(f"{el}:")
+for threshold in [0.7, 0.5, 0.3]:
+    print(f"Threshold {threshold}:")
+    for el in ["BCV", "tACS"]:
+        print(f"{el}:")
 
-    vectors_of_eigenvalues_before_active_treatment_list, vectors_of_eigenvalues_after_active_treatment_list = FindVectorsOfEigenvalues(
-        el, "Active")
-    vectors_of_eigenvalues_before_sham_treatment_list, vectors_of_eigenvalues_after_sham_treatment_list = FindVectorsOfEigenvalues(
-        el, "Sham")
+        vectors_of_eigenvalues_before_active_treatment_list, vectors_of_eigenvalues_after_active_treatment_list = FindVectorsOfEigenvalues(
+            el, "Active", threshold)
+        vectors_of_eigenvalues_before_sham_treatment_list, vectors_of_eigenvalues_after_sham_treatment_list = FindVectorsOfEigenvalues(
+            el, "Sham", threshold)
 
-    print("Active:")
-    real_groups, predicted_groups = FindRealAndPredictedGroups(vectors_of_eigenvalues_before_active_treatment_list,
-                                                               vectors_of_eigenvalues_after_active_treatment_list)
+        print("Active:")
+        real_groups, predicted_groups = FindRealAndPredictedGroups(vectors_of_eigenvalues_before_active_treatment_list,
+                                                                   vectors_of_eigenvalues_after_active_treatment_list)
 
-    accuracy = np.mean(predicted_groups == real_groups)
-    print(f"Clusterization accuracy: {accuracy}")
+        accuracy = np.mean(predicted_groups == real_groups)
+        print(f"Clusterization accuracy: {accuracy}")
 
-    error_1_rate, error_2_rate = FindErrorsRates(real_groups, predicted_groups)
-    print(f"Type 1 error rate: {error_1_rate}, type 2 error rate: {error_2_rate}")
+        error_1_rate, error_2_rate = FindErrorsRates(real_groups, predicted_groups)
+        print(f"Type 1 error rate: {error_1_rate}, type 2 error rate: {error_2_rate}")
 
-    InvestigateHypoForClasters(real_groups, predicted_groups)
+        InvestigateHypoForClasters(real_groups, predicted_groups)
 
-    print()
-    print("Sham:")
-    real_groups, predicted_groups = FindRealAndPredictedGroups(vectors_of_eigenvalues_before_sham_treatment_list,
-                                                               vectors_of_eigenvalues_after_sham_treatment_list)
+        print()
+        print("Sham:")
+        real_groups, predicted_groups = FindRealAndPredictedGroups(vectors_of_eigenvalues_before_sham_treatment_list,
+                                                                   vectors_of_eigenvalues_after_sham_treatment_list)
 
-    accuracy = np.mean(predicted_groups == real_groups)
-    print(f"Clusterization accuracy: {accuracy}")
+        accuracy = np.mean(predicted_groups == real_groups)
+        print(f"Clusterization accuracy: {accuracy}")
 
-    error_1_rate, error_2_rate = FindErrorsRates(real_groups, predicted_groups)
-    print(f"Type 1 error rate: {error_1_rate}, type 2 error rate: {error_2_rate}")
+        error_1_rate, error_2_rate = FindErrorsRates(real_groups, predicted_groups)
+        print(f"Type 1 error rate: {error_1_rate}, type 2 error rate: {error_2_rate}")
 
-    InvestigateHypoForClasters(real_groups, predicted_groups)
+        InvestigateHypoForClasters(real_groups, predicted_groups)
 
-    print("\n")
+        print("\n")
+
+    print("\n\n")

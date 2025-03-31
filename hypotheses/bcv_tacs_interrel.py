@@ -1,12 +1,11 @@
-import numpy as np
 from scipy import stats as sts
 from pathlib import Path
 from hodge_laplacians_functions import *
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics import confusion_matrix
 
 
-def FindVectorsOfEigenvalues(method, way, k):
+def FindVectorsOfEigenvalues(method, way, k, threshold):
     vectors_of_eigenvalues_after_treatment_list = []
     for i in range(21):
         path_for_easy_files = Path(f"../EEG_data/{method}/{way}/{i + 1}")
@@ -21,7 +20,7 @@ def FindVectorsOfEigenvalues(method, way, k):
                     EEG_data = np.loadtxt(f"../EEG_data/{method}/{way}/{i + 1}/" + file.name)
                     EEG_data = EEG_data[:, :8].transpose()
                     corr_matrix = np.abs(np.corrcoef(EEG_data))
-                    corr_matrix = np.where(corr_matrix > 0.7, corr_matrix, 0)
+                    corr_matrix = np.where(corr_matrix > threshold, corr_matrix, 0)
 
                     graph_laplacian = ComputeKHodgeLaplacian(corr_matrix, k, True)
 
@@ -32,6 +31,7 @@ def FindVectorsOfEigenvalues(method, way, k):
 
     return vectors_of_eigenvalues_after_treatment_list
 
+
 def InvestigateHypoForClasters(real_groups, predicted_groups):
     conf_matrix = confusion_matrix(real_groups, predicted_groups)
     p_value = sts.chi2_contingency(conf_matrix)[1]
@@ -40,6 +40,7 @@ def InvestigateHypoForClasters(real_groups, predicted_groups):
         print(f"Clustering and real groups are interrelated, p-value = {p_value}")
     else:
         print(f"Clustering and real groups are independent, p-value = {p_value}")
+
 
 def FindErrorsRates(real_groups, predicted_groups):
     conf_matrix = confusion_matrix(real_groups, predicted_groups)
@@ -50,38 +51,74 @@ def FindErrorsRates(real_groups, predicted_groups):
     return error_1_rate, error_2_rate
 
 
-for k in (0, 1):
-    print(f"{k}-Hodge Laplacian:")
-    vectors_of_eigenvalues_for_bcv = FindVectorsOfEigenvalues("BCV", "Active", k) + FindVectorsOfEigenvalues("BCV", "Sham", k)
-    vectors_of_eigenvalues_for_tacs = FindVectorsOfEigenvalues("tACS", "Active", k) + FindVectorsOfEigenvalues("tACS", "Sham", k)
+for threshold in [0.7, 0.5, 0.3]:
+    print(f"Threshold {threshold}:")
+    for k in (0, 1):
+        print(f"{k}-Hodge Laplacian:")
+        vectors_of_eigenvalues_for_bcv = FindVectorsOfEigenvalues("BCV", "Active", k, threshold) + FindVectorsOfEigenvalues("BCV",
+                                                                                                                 "Sham", k, threshold)
+        vectors_of_eigenvalues_for_tacs = FindVectorsOfEigenvalues("tACS", "Active", k, threshold) + FindVectorsOfEigenvalues("tACS",
+                                                                                                                   "Sham",
+                                                                                                                   k, threshold)
 
-    vectors_of_eigenvalues_medians_for_bcv = [np.median(el) for el in vectors_of_eigenvalues_for_bcv]
-    vectors_of_eigenvalues_medians_for_tacs = [np.median(el) for el in vectors_of_eigenvalues_for_tacs]
+        vectors_of_eigenvalues_medians_for_bcv = [np.median(el) for el in vectors_of_eigenvalues_for_bcv]
+        vectors_of_eigenvalues_medians_for_tacs = [np.median(el) for el in vectors_of_eigenvalues_for_tacs]
+        vectors_of_eigenvalues_sums_for_bcv = [np.sum(el) for el in vectors_of_eigenvalues_for_bcv]
+        vectors_of_eigenvalues_sums_for_tacs = [np.sum(el) for el in vectors_of_eigenvalues_for_tacs]
+        vectors_of_eigenvalues_means_for_bcv = [np.mean(el) for el in vectors_of_eigenvalues_for_bcv]
+        vectors_of_eigenvalues_means_for_tacs = [np.mean(el) for el in vectors_of_eigenvalues_for_tacs]
+        vectors_of_eigenvalues_vars_for_bcv = [np.var(el) for el in vectors_of_eigenvalues_for_bcv]
+        vectors_of_eigenvalues_vars_for_tacs = [np.var(el) for el in vectors_of_eigenvalues_for_tacs]
 
-    _, p_value = sts.mannwhitneyu(vectors_of_eigenvalues_medians_for_bcv, vectors_of_eigenvalues_medians_for_tacs, alternative="two-sided")
-    alpha = 0.05
-    if p_value < 0.05:
-        print(f"Spectrа of eigenvalues for BCV and tACS have differences, p-value = {p_value}")
-    else:
-        print(f"Spectrа of eigenvalues for BCV and tACS are interrelated, p-value = {p_value}")
+        _, p_value = sts.mannwhitneyu(vectors_of_eigenvalues_medians_for_bcv, vectors_of_eigenvalues_medians_for_tacs,
+                                      alternative="two-sided")
+        alpha = 0.05
+        if p_value < 0.05:
+            print(f"Median. Spectrа of eigenvalues for BCV and tACS have differences, p-value = {p_value}")
+        else:
+            print(f"Median. Spectrа of eigenvalues for BCV and tACS are interrelated, p-value = {p_value}")
 
-    if k == 0:
-        vectors_of_eigenvalues_for_bcv = np.array(vectors_of_eigenvalues_for_bcv)
-        vectors_of_eigenvalues_for_tacs = np.array(vectors_of_eigenvalues_for_tacs)
-        vectors_of_eigenvalues = np.vstack(
-            [vectors_of_eigenvalues_for_bcv, vectors_of_eigenvalues_for_tacs])
-        real_groups = np.array(
-            [0] * len(vectors_of_eigenvalues_for_bcv) + [1] * len(
-                vectors_of_eigenvalues_for_tacs))
-        kmeans = KMeans(n_clusters=2, random_state=13)
-        predicted_groups = kmeans.fit_predict(vectors_of_eigenvalues)
+        _, p_value = sts.mannwhitneyu(vectors_of_eigenvalues_sums_for_bcv, vectors_of_eigenvalues_sums_for_tacs,
+                                      alternative="two-sided")
+        alpha = 0.05
+        if p_value < 0.05:
+            print(f"Sum. Spectrа of eigenvalues for BCV and tACS have differences, p-value = {p_value}")
+        else:
+            print(f"Sum. Spectrа of eigenvalues for BCV and tACS are interrelated, p-value = {p_value}")
 
-        print(f"Accuracy: {np.mean(predicted_groups == real_groups)}")
+        _, p_value = sts.mannwhitneyu(vectors_of_eigenvalues_means_for_bcv, vectors_of_eigenvalues_means_for_tacs,
+                                      alternative="two-sided")
+        alpha = 0.05
+        if p_value < 0.05:
+            print(f"Mean. Spectrа of eigenvalues for BCV and tACS have differences, p-value = {p_value}")
+        else:
+            print(f"Mean. Spectrа of eigenvalues for BCV and tACS are interrelated, p-value = {p_value}")
 
-        error_1_rate, error_2_rate = FindErrorsRates(real_groups, predicted_groups)
-        print(f"Type 1 error rate: {error_1_rate}, type 2 error rate: {error_2_rate}")
+        _, p_value = sts.mannwhitneyu(vectors_of_eigenvalues_vars_for_bcv, vectors_of_eigenvalues_vars_for_tacs,
+                                      alternative="two-sided")
+        alpha = 0.05
+        if p_value < 0.05:
+            print(f"Var. Spectrа of eigenvalues for BCV and tACS have differences, p-value = {p_value}")
+        else:
+            print(f"Var. Spectrа of eigenvalues for BCV and tACS are interrelated, p-value = {p_value}")
 
-        InvestigateHypoForClasters(real_groups, predicted_groups)
+        if k == 0:
+            vectors_of_eigenvalues_for_bcv = np.array(vectors_of_eigenvalues_for_bcv)
+            vectors_of_eigenvalues_for_tacs = np.array(vectors_of_eigenvalues_for_tacs)
+            vectors_of_eigenvalues = np.vstack(
+                [vectors_of_eigenvalues_for_bcv, vectors_of_eigenvalues_for_tacs])
+            real_groups = np.array(
+                [0] * len(vectors_of_eigenvalues_for_bcv) + [1] * len(
+                    vectors_of_eigenvalues_for_tacs))
+            spec_clust = SpectralClustering(n_clusters=2, random_state=13)
+            predicted_groups = spec_clust.fit_predict(vectors_of_eigenvalues)
 
-        print()
+            print(f"Accuracy: {np.mean(predicted_groups == real_groups)}")
 
+            error_1_rate, error_2_rate = FindErrorsRates(real_groups, predicted_groups)
+            print(f"Type 1 error rate: {error_1_rate}, type 2 error rate: {error_2_rate}")
+
+            InvestigateHypoForClasters(real_groups, predicted_groups)
+
+            print()
+    print("\n\n")
