@@ -1,3 +1,7 @@
+"""
+Check visualization with Matplotlib
+"""
+
 import numpy as np
 
 data = np.loadtxt("../EEG_data/BCV/Active/1/20220620113331_1-1.easy")
@@ -8,6 +12,6 @@ times_in_sec = (times - times[0]) / 1000
 
 channels_names = ["Fz", "Pz", "P3", "P4", "Cz", "EXT", "CP5", "CP6"]
 
-from visualize.visualization import VisualizeMatplotlib
+from visualize.visualization import visualize_matplotlib
 
-VisualizeMatplotlib(EEG_data, channels_names, times)
+visualize_matplotlib(EEG_data, channels_names, times)

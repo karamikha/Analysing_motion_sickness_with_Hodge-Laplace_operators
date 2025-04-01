@@ -1,6 +1,9 @@
+"""
+Check graph Laplacian for the data for each participant before and after treatment
+"""
+
 from pathlib import Path
 from hodge_laplacians_functions import *
-from visualize.visualization import VisualizeGraph
 
 for method in ["BCV", "tACS"]:
     print(f"{method}:")
@@ -31,7 +34,7 @@ for method in ["BCV", "tACS"]:
 
                         k = 0
                         while True:
-                            k_hodge_laplacian = ComputeKHodgeLaplacian(corr_matrix, k, False)
+                            k_hodge_laplacian = compute_k_hodge_laplacian(corr_matrix, k, False)
 
                             if k_hodge_laplacian.size == 0:
                                 if k == 1:
@@ -41,8 +44,8 @@ for method in ["BCV", "tACS"]:
                                         q_chordal_after_treatment += 1
                                 break
 
-                            eigenvalues = FindEigenValuesOfMatrix(k_hodge_laplacian)
-                            betti_number = FindBettiNumber(k_hodge_laplacian)
+                            eigenvalues = find_eigenvalues_of_matrix(k_hodge_laplacian)
+                            betti_number = find_betti_number(k_hodge_laplacian)
 
                             if k == 0 and file.name[-6] == "2":
                                 if not any(np.all(eigenvalues == vector) for vector in vectors_of_eigenvalues_list):
@@ -65,8 +68,10 @@ for method in ["BCV", "tACS"]:
                     q_less_connected_comps += 1
 
         print("Some useful info:")
-        print(f"- the number of participants for whom the number of connected components have decreased: {q_less_connected_comps}")
-        print(f"- {q_chordal_before_treatment} of {q_participants} graphs for participants before treatment are chordal, {q_chordal_after_treatment} of {q_participants} graphs for participants after treatment are chordal")
+        print(
+            f"- the number of participants for whom the number of connected components have decreased: {q_less_connected_comps}")
+        print(
+            f"- {q_chordal_before_treatment} of {q_participants} graphs for participants before treatment are chordal, {q_chordal_after_treatment} of {q_participants} graphs for participants after treatment are chordal")
         print(f"- the number of unique spectra after treatment: {len(vectors_of_eigenvalues_list)}")
         print()
     print()

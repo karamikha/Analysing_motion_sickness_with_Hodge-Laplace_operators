@@ -1,12 +1,16 @@
-import numpy as np
+"""
+Hypotheses for active and sham treatment
+"""
+
 from scipy import stats as sts
 from pathlib import Path
 from hodge_laplacians_functions import *
-from sklearn.cluster import KMeans, SpectralClustering
+from sklearn.cluster import SpectralClustering
 from sklearn.metrics import confusion_matrix
 
 
-def FindVectorsOfEigenvalues(method, way, k, threshold):
+def find_vectors_of_eigenvalues(method, way, k, threshold):
+    """Find vectors of eigenvalues"""
     vectors_of_eigenvalues_after_treatment_list = []
     for i in range(21):
         path_for_easy_files = Path(f"../EEG_data/{method}/{way}/{i + 1}")
@@ -23,9 +27,9 @@ def FindVectorsOfEigenvalues(method, way, k, threshold):
                     corr_matrix = np.abs(np.corrcoef(EEG_data))
                     corr_matrix = np.where(corr_matrix > threshold, corr_matrix, 0)
 
-                    graph_laplacian = ComputeKHodgeLaplacian(corr_matrix, k, True)
+                    graph_laplacian = compute_k_hodge_laplacian(corr_matrix, k, True)
 
-                    eigenvalues = FindEigenValuesOfMatrix(graph_laplacian)
+                    eigenvalues = find_eigenvalues_of_matrix(graph_laplacian)
 
                     if file.name[-6] == "2":
                         vectors_of_eigenvalues_after_treatment_list.append(eigenvalues)
@@ -33,7 +37,8 @@ def FindVectorsOfEigenvalues(method, way, k, threshold):
     return vectors_of_eigenvalues_after_treatment_list
 
 
-def InvestigateHypoForClasters(real_groups, predicted_groups):
+def investigate_hypo_for_clusters(real_groups, predicted_groups):
+    """Investigate the hypothesis about clusters and real groups using chi2-test"""
     conf_matrix = confusion_matrix(real_groups, predicted_groups)
     p_value = sts.chi2_contingency(conf_matrix)[1]
     alpha = 0.05
@@ -43,11 +48,12 @@ def InvestigateHypoForClasters(real_groups, predicted_groups):
         print(f"Clustering and real groups are independent, p-value = {p_value}")
 
 
-def FindErrorsRates(real_groups, predicted_groups):
+def find_errors_rates(real_groups, predicted_groups):
+    """Find rates of type I and type II errors"""
     conf_matrix = confusion_matrix(real_groups, predicted_groups)
-    TN, FP, FN, TP = conf_matrix.ravel()
-    error_1_rate = FP / (FP + TN)
-    error_2_rate = FN / (FN + TP)
+    tn, fp, fn, tp = conf_matrix.ravel()
+    error_1_rate = fp / (fp + tn)
+    error_2_rate = fn / (fn + tp)
 
     return error_1_rate, error_2_rate
 
@@ -59,8 +65,8 @@ for threshold in [0.7, 0.5, 0.3]:
 
         for k in (0, 1):
             print(f"{k}-Hodge Laplacian:")
-            vectors_of_eigenvalues_for_active = FindVectorsOfEigenvalues(el, "Active", k, threshold)
-            vectors_of_eigenvalues_for_sham = FindVectorsOfEigenvalues(el, "Sham", k, threshold)
+            vectors_of_eigenvalues_for_active = find_vectors_of_eigenvalues(el, "Active", k, threshold)
+            vectors_of_eigenvalues_for_sham = find_vectors_of_eigenvalues(el, "Sham", k, threshold)
 
             vectors_of_eigenvalues_medians_for_active = [np.median(el) for el in vectors_of_eigenvalues_for_active]
             vectors_of_eigenvalues_medians_for_sham = [np.median(el) for el in vectors_of_eigenvalues_for_sham]
@@ -75,33 +81,41 @@ for threshold in [0.7, 0.5, 0.3]:
                                           vectors_of_eigenvalues_medians_for_sham, alternative="two-sided")
             alpha = 0.05
             if p_value < 0.05:
-                print(f"Median. Spectrа of eigenvalues for active and sham treatment have differences, p-value = {p_value}")
+                print(
+                    f"Median. Spectrа of eigenvalues for active and sham treatment have differences, p-value = {p_value}")
             else:
-                print(f"Median. Spectrа of eigenvalues for active and sham treatment are interrelated, p-value = {p_value}")
+                print(
+                    f"Median. Spectrа of eigenvalues for active and sham treatment are interrelated, p-value = {p_value}")
 
             _, p_value = sts.mannwhitneyu(vectors_of_eigenvalues_sums_for_active,
                                           vectors_of_eigenvalues_sums_for_sham, alternative="two-sided")
             alpha = 0.05
             if p_value < 0.05:
-                print(f"Sum. Spectrа of eigenvalues for active and sham treatment have differences, p-value = {p_value}")
+                print(
+                    f"Sum. Spectrа of eigenvalues for active and sham treatment have differences, p-value = {p_value}")
             else:
-                print(f"Sum. Spectrа of eigenvalues for active and sham treatment are interrelated, p-value = {p_value}")
+                print(
+                    f"Sum. Spectrа of eigenvalues for active and sham treatment are interrelated, p-value = {p_value}")
 
             _, p_value = sts.mannwhitneyu(vectors_of_eigenvalues_means_for_active,
                                           vectors_of_eigenvalues_means_for_sham, alternative="two-sided")
             alpha = 0.05
             if p_value < 0.05:
-                print(f"Mean. Spectrа of eigenvalues for active and sham treatment have differences, p-value = {p_value}")
+                print(
+                    f"Mean. Spectrа of eigenvalues for active and sham treatment have differences, p-value = {p_value}")
             else:
-                print(f"Mean. Spectrа of eigenvalues for active and sham treatment are interrelated, p-value = {p_value}")
+                print(
+                    f"Mean. Spectrа of eigenvalues for active and sham treatment are interrelated, p-value = {p_value}")
 
             _, p_value = sts.mannwhitneyu(vectors_of_eigenvalues_vars_for_active,
                                           vectors_of_eigenvalues_vars_for_sham, alternative="two-sided")
             alpha = 0.05
             if p_value < 0.05:
-                print(f"Var. Spectrа of eigenvalues for active and sham treatment have differences, p-value = {p_value}")
+                print(
+                    f"Var. Spectrа of eigenvalues for active and sham treatment have differences, p-value = {p_value}")
             else:
-                print(f"Var. Spectrа of eigenvalues for active and sham treatment are interrelated, p-value = {p_value}")
+                print(
+                    f"Var. Spectrа of eigenvalues for active and sham treatment are interrelated, p-value = {p_value}")
 
             if k == 0:
                 vectors_of_eigenvalues_for_bcv = np.array(vectors_of_eigenvalues_for_active)
@@ -116,10 +130,10 @@ for threshold in [0.7, 0.5, 0.3]:
 
                 print(f"Accuracy: {np.mean(predicted_groups == real_groups)}")
 
-                error_1_rate, error_2_rate = FindErrorsRates(real_groups, predicted_groups)
+                error_1_rate, error_2_rate = find_errors_rates(real_groups, predicted_groups)
                 print(f"Type 1 error rate: {error_1_rate}, type 2 error rate: {error_2_rate}")
 
-                InvestigateHypoForClasters(real_groups, predicted_groups)
+                investigate_hypo_for_clusters(real_groups, predicted_groups)
 
             print()
 
